@@ -1,4 +1,3 @@
-assistantUI
 :host {
    --bubble-user-bg: #0070d2;
    --bubble-ai-bg: #f3f2f5;
@@ -32,8 +31,8 @@ assistantUI
 }
 
 .bubble-user .slds-chat_message__text {
-   background: var(--bubble-user-bg);
-   color: white;
+   background: var(--bubble-user-bg, #0070d2);
+   color: white !important;
    border-radius: var(--bubble-radius) var(--bubble-radius) 6px var(--bubble-radius);
    padding: 10px 16px;
 }
