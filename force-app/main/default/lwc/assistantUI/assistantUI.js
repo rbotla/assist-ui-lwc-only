@@ -123,6 +123,9 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            processedContent = this.escapeHtml(content);
        }
 
+       // Check if the content has article references
+       const hasArticleRefs = role === 'assistant' && this.hasArticleReferences(content);
+
        const newMessage = {
            id,
            content: processedContent,
@@ -139,7 +142,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            isSubmittingFeedback: false,
            feedbackPlaceholder: '',
            feedbackRows: 2,
-           hasArticleLinks: role === 'assistant' && this.hasArticleReferences(content)
+           hasArticleLinks: hasArticleRefs
        };
 
        this.messages = [...this.messages, newMessage];
@@ -272,7 +275,9 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
 
    hasArticleReferences(text) {
        if (!text) return false;
-       return /(\(Article\s+\d{9})|(\(Article\s+[\d,\s]+\))|(Article:\s+\d{9})/g.test(text);
+       const hasRefs = /(\(Article\s+\d{9})|(\(Article\s+[\d,\s]+\))|(Article:\s+\d{9})/g.test(text);
+       console.log('hasArticleReferences check:', text.substring(0, 100), '...', 'hasRefs:', hasRefs);
+       return hasRefs;
    }
 
    /* ============================================== USER INPUT ============================================== */
