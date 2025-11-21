@@ -223,6 +223,28 @@
    }
 }
 
+/* Knowledge Article Links */
+.knowledge-article-link {
+   color: #0070d2;
+   text-decoration: underline;
+   cursor: pointer;
+   font-weight: 500;
+   transition: color 0.2s ease;
+}
+
+.knowledge-article-link:hover {
+   color: #005fb2;
+   text-decoration: underline;
+}
+
+.knowledge-article-link:visited {
+   color: #6b46c1;
+}
+
+.knowledge-article-link:active {
+   color: #1e3a8a;
+}
+
 /* Animation for smooth transitions */
 .input-container {
    transition: all 0.2s ease-in-out;

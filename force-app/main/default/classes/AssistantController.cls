@@ -179,6 +179,37 @@ public with sharing class AssistantController {
    }
 
 
+   @AuraEnabled
+   public static Map<String, String> getKnowledgeArticleIds(List<String> articleNumbers) {
+       Map<String, String> articleMap = new Map<String, String>();
+
+       if (articleNumbers == null || articleNumbers.isEmpty()) {
+           return articleMap;
+       }
+
+       try {
+           // Query Knowledge Articles by ArticleNumber
+           List<Knowledge__kav> articles = [
+               SELECT Id, ArticleNumber, Title
+               FROM Knowledge__kav
+               WHERE ArticleNumber IN :articleNumbers
+               AND PublishStatus = 'Online'
+               AND Language = 'en_US'
+           ];
+
+           // Map article numbers to their 18-digit IDs
+           for (Knowledge__kav article : articles) {
+               articleMap.put(article.ArticleNumber, article.Id);
+           }
+
+       } catch (Exception e) {
+           // Log error but don't break the user experience
+           System.debug('Error fetching Knowledge Articles: ' + e.getMessage());
+       }
+
+       return articleMap;
+   }
+
    // Helper method to get user details (similar to your existing pattern)
    private static Map<String, Object> getUserDetails() {
        User loggedInUserDetails = [SELECT Id, FirstName, LastName, Email, EmployeeNumber, FederationIdentifier

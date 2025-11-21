@@ -2,12 +2,14 @@
 /* assistantChat.js - Enterprise-Grade Native LWC Chat for Gen AI - Nov 2025 */
 import { LightningElement, api, track } from 'lwc';
 import { ShowToastEvent } from 'lightning/platformShowToastEvent';
+import { NavigationMixin } from 'lightning/navigation';
 import getChatResponse from '@salesforce/apex/AssistantController.getChatResponse';
 import submitChatFeedback from '@salesforce/apex/AssistantController.submitChatFeedback';
+import getKnowledgeArticleIds from '@salesforce/apex/AssistantController.getKnowledgeArticleIds';
 
 const TYPING_INDICATOR_ID = 'typing-bubble-999';
 
-export default class AssistantChat extends LightningElement {
+export default class AssistantChat extends NavigationMixin(LightningElement) {
    @api height = '600px';
    @api welcomeMessage = 'Hello! How can I help you today?';
    @api inputPlaceholder = 'Type your message...';
@@ -21,7 +23,13 @@ export default class AssistantChat extends LightningElement {
 
    /* ============================================== LIFECYCLE ============================================== */
    connectedCallback() {
-       // this.addSystemMessage('You are a helpful AI assistant for Salesforce users.');
+       // Set up global function for knowledge article navigation
+       window.openKnowledgeArticle = this.openKnowledgeArticle.bind(this);
+   }
+
+   disconnectedCallback() {
+       // Clean up global function
+       delete window.openKnowledgeArticle;
    }
 
    renderedCallback() {
@@ -49,7 +57,7 @@ export default class AssistantChat extends LightningElement {
    }
 
    /* ============================================== MESSAGE HANDLING ============================================== */
-   addMessage(content, role = 'user', isTyping = false) {
+   async addMessage(content, role = 'user', isTyping = false) {
        // Remove previous typing indicator if exists
        if (isTyping) {
            this.messages = this.messages.filter(m => m.id !== TYPING_INDICATOR_ID);
@@ -58,9 +66,17 @@ export default class AssistantChat extends LightningElement {
        const id = isTyping ? TYPING_INDICATOR_ID : Date.now() + Math.random();
        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+       // Handle async renderMarkdown for assistant messages
+       let processedContent;
+       if (role === 'assistant') {
+           processedContent = await this.renderMarkdown(content);
+       } else {
+           processedContent = this.escapeHtml(content);
+       }
+
        const newMessage = {
            id,
-           content: role === 'assistant' ? this.renderMarkdown(content) : this.escapeHtml(content),
+           content: processedContent,
            rawContent: content,
            role,
            isTyping,
@@ -75,21 +91,6 @@ export default class AssistantChat extends LightningElement {
            feedbackPlaceholder: '',
            feedbackRows: 2
        };
-       // const newMessage = {
-       //     id,
-       //     content: role === 'assistant' ? this.renderMarkdown(content) : this.escapeHtml(content),
-       //     rawContent: content, // for copying
-       //     role,
-       //     timestamp,
-       //     isTyping,
-       //     align: role === 'user' ? 'outgoing' : 'incoming',
-       //     avatarClass: role === 'user'
-       //         ? 'slds-avatar slds-avatar_circle slds-chat-avatar_user'
-       //         : 'slds-avatar slds-avatar_circle slds-chat-avatar_agent',
-       //     icon: role === 'user' ? 'utility:user' : 'utility:bot',
-       //     itemClass: `slds-chat_message slds-chat_message_${role === 'user' ? 'outgoing' : 'incoming'}`,
-       //     showActions: role === 'assistant' && !isTyping
-       // };
 
        this.messages = [...this.messages, newMessage];
 
@@ -114,9 +115,11 @@ export default class AssistantChat extends LightningElement {
        return div.innerHTML;
    }
 
-   renderMarkdown(text) {
+   async renderMarkdown(text) {
        if (!text) return '';
-       return text
+
+       // First, apply basic markdown formatting
+       let formattedText = text
            .replace(/&/g, '&amp;')
            .replace(/</g, '&lt;')
            .replace(/>/g, '&gt;')
@@ -126,6 +129,95 @@ export default class AssistantChat extends LightningElement {
            .replace(/_(.*?)_/g, '<em>$1</em>')
            .replace(/`(.*?)`/g, '<code class="slds-code_inline">$1</code>')
            .replace(/\n/g, '<br>');
+
+       // Parse and replace article references with links
+       formattedText = await this.parseArticleReferences(formattedText);
+
+       return formattedText;
+   }
+
+   async parseArticleReferences(text) {
+       // Extract all article numbers from various patterns
+       const articleNumbers = this.extractArticleNumbers(text);
+
+       if (articleNumbers.length === 0) {
+           return text;
+       }
+
+       try {
+           // Get Knowledge Article IDs from Apex
+           const articleMap = await getKnowledgeArticleIds({ articleNumbers });
+
+           // Replace article references with clickable links
+           let updatedText = text;
+
+           // Pattern 1: (Article 000005262)
+           updatedText = updatedText.replace(/\(Article\s+(\d{9})\)/g, (match, articleNumber) => {
+               const articleId = articleMap[articleNumber];
+               if (articleId) {
+                   return `(<a href="javascript:void(0)" onclick="window.openKnowledgeArticle('${articleId}')" class="knowledge-article-link">Article ${articleNumber}</a>)`;
+               }
+               return match;
+           });
+
+           // Pattern 2: (Article 000005262, 000005263)
+           updatedText = updatedText.replace(/\(Article\s+([\d,\s]+)\)/g, (match, articleNumbers) => {
+               const numbers = articleNumbers.split(',').map(n => n.trim());
+               const links = numbers.map(num => {
+                   const articleId = articleMap[num];
+                   if (articleId) {
+                       return `<a href="javascript:void(0)" onclick="window.openKnowledgeArticle('${articleId}')" class="knowledge-article-link">${num}</a>`;
+                   }
+                   return num;
+               });
+               return `(Article ${links.join(', ')})`;
+           });
+
+           // Pattern 3: Article: 000005262
+           updatedText = updatedText.replace(/Article:\s+(\d{9})/g, (match, articleNumber) => {
+               const articleId = articleMap[articleNumber];
+               if (articleId) {
+                   return `Article: <a href="javascript:void(0)" onclick="window.openKnowledgeArticle('${articleId}')" class="knowledge-article-link">${articleNumber}</a>`;
+               }
+               return match;
+           });
+
+           return updatedText;
+
+       } catch (error) {
+           console.error('Error fetching article IDs:', error);
+           return text; // Return original text if error occurs
+       }
+   }
+
+   extractArticleNumbers(text) {
+       const numbers = new Set();
+
+       // Pattern 1: (Article 000005262)
+       const pattern1 = /\(Article\s+(\d{9})\)/g;
+       let match;
+       while ((match = pattern1.exec(text)) !== null) {
+           numbers.add(match[1]);
+       }
+
+       // Pattern 2: (Article 000005262, 000005263)
+       const pattern2 = /\(Article\s+([\d,\s]+)\)/g;
+       while ((match = pattern2.exec(text)) !== null) {
+           const articleNumbers = match[1].split(',').map(n => n.trim());
+           articleNumbers.forEach(num => {
+               if (/^\d{9}$/.test(num)) {
+                   numbers.add(num);
+               }
+           });
+       }
+
+       // Pattern 3: Article: 000005262
+       const pattern3 = /Article:\s+(\d{9})/g;
+       while ((match = pattern3.exec(text)) !== null) {
+           numbers.add(match[1]);
+       }
+
+       return Array.from(numbers);
    }
 
    /* ============================================== USER INPUT ============================================== */
@@ -339,6 +431,17 @@ export default class AssistantChat extends LightningElement {
            const container = this.chatContainer || this.template.querySelector('.slds-chat_list');
            if (container) {
                container.scrollTop = container.scrollHeight + 9999; // +9999 forces bottom even with images/momentum
+           }
+       });
+   }
+
+   /* ============================================== KNOWLEDGE ARTICLE NAVIGATION ============================================== */
+   openKnowledgeArticle(articleId) {
+       this[NavigationMixin.Navigate]({
+           type: 'standard__knowledgeArticlePage',
+           attributes: {
+               articleId: articleId,
+               urlName: null
            }
        });
    }
