@@ -283,7 +283,12 @@ export default class AssistantChat extends LightningElement {
                            ...m,
                            showFeedbackInput: false,
                            feedbackGiven: 'brand',
-                           isSubmittingFeedback: false
+                           isSubmittingFeedback: false,
+                           feedbackComment: '',
+                           feedbackType: null,
+                           feedbackTypeText: '',
+                           feedbackPlaceholder: '',
+                           feedbackRows: 2
                        };
                    }
                    return m;
@@ -308,10 +313,19 @@ export default class AssistantChat extends LightningElement {
            this.addMessage(`❌ Error sending feedback: ${err.body?.message || err.message}`, 'system');
            this.showToast('Error', 'Could not submit feedback', 'error');
        } finally {
-           // Reset submitting state
+           // Reset submitting state and clear all feedback fields
            this.messages = this.messages.map(m => {
                if (m.id == msgId) {
-                   return { ...m, isSubmittingFeedback: false, showFeedbackInput: false };
+                   return {
+                       ...m,
+                       isSubmittingFeedback: false,
+                       showFeedbackInput: false,
+                       feedbackComment: '',
+                       feedbackType: null,
+                       feedbackTypeText: '',
+                       feedbackPlaceholder: '',
+                       feedbackRows: 2
+                   };
                }
                return m;
            });
