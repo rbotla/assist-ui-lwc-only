@@ -50,13 +50,21 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
    setupManualDOMContent() {
        // Find all manual DOM containers and populate them
        const manualContainers = this.template.querySelectorAll('.message-with-links');
-       manualContainers.forEach(container => {
+       console.log('Manual containers found:', manualContainers.length);
+
+       manualContainers.forEach((container, index) => {
            const messageId = container.dataset.messageId;
+           console.log(`Container ${index}: messageId=${messageId}, hasChildren=${container.hasChildNodes()}`);
+
            if (messageId && !container.hasChildNodes()) {
                // Find the corresponding message
                const message = this.messages.find(msg => String(msg.id) === String(messageId));
+               console.log(`Found message for ${messageId}:`, message ? 'YES' : 'NO');
+
                if (message && message.content) {
+                   console.log('Setting innerHTML:', message.content.substring(0, 200));
                    container.innerHTML = message.content;
+                   console.log('Container after innerHTML:', container.innerHTML.substring(0, 200));
                }
            }
        });
@@ -192,14 +200,17 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
    async parseArticleReferences(text) {
        // Extract all article numbers from various patterns
        const articleNumbers = this.extractArticleNumbers(text);
+       console.log('Extracted article numbers:', articleNumbers);
 
        if (articleNumbers.length === 0) {
+           console.log('No article numbers found');
            return text;
        }
 
        try {
            // Get Knowledge Article IDs from Apex
            const articleMap = await getKnowledgeArticleIds({ articleNumbers });
+           console.log('Article map from Apex:', articleMap);
 
            // Replace article references with clickable links
            let updatedText = text;
@@ -261,6 +272,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
                return match;
            });
 
+           console.log('Final updatedText with links:', updatedText.substring(0, 500));
            return updatedText;
 
        } catch (error) {
