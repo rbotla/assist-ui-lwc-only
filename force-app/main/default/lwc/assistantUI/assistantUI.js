@@ -213,8 +213,34 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
                return match;
            });
 
-           // Pattern 2: (Article 000005262, 000005263)
+           // Pattern 2: (Article Numbers: 000005262, 000005218)
+           updatedText = updatedText.replace(/\(Article\s+Numbers:\s*([\d,\s]+)\)/g, (match, articleNumbers) => {
+               const numbers = articleNumbers.split(',').map(n => n.trim());
+               const links = numbers.map(num => {
+                   const articleId = articleMap[num];
+                   if (articleId && /^\d{9}$/.test(num)) {
+                       return `<a href="#" data-article-id="${articleId}" data-article-number="${num}" class="knowledge-article-link">${num}</a>`;
+                   }
+                   return num;
+               });
+               return `(Article Numbers: ${links.join(', ')})`;
+           });
+
+           // Pattern 3: (Article Number: 000006196)
+           updatedText = updatedText.replace(/\(Article\s+Number:\s*(\d{9})\)/g, (match, articleNumber) => {
+               const articleId = articleMap[articleNumber];
+               if (articleId) {
+                   return `(Article Number: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>)`;
+               }
+               return match;
+           });
+
+           // Pattern 4: (Article 000005262, 000005263) - legacy support
            updatedText = updatedText.replace(/\(Article\s+([\d,\s]+)\)/g, (match, articleNumbers) => {
+               // Skip if this looks like our new patterns
+               if (match.includes('Number:') || match.includes('Numbers:')) {
+                   return match; // Let other patterns handle this
+               }
                const numbers = articleNumbers.split(',').map(n => n.trim());
                const links = numbers.map(num => {
                    const articleId = articleMap[num];
@@ -226,7 +252,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
                return `(Article ${links.join(', ')})`;
            });
 
-           // Pattern 3: Article: 000005262
+           // Pattern 5: Article: 000005262
            updatedText = updatedText.replace(/Article:\s+(\d{9})/g, (match, articleNumber) => {
                const articleId = articleMap[articleNumber];
                if (articleId) {
@@ -253,7 +279,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            numbers.add(match[1]);
        }
 
-       // Pattern 2: (Article 000005262, 000005263)
+       // Pattern 2: (Article 000005262, 000005263) - legacy support
        const pattern2 = /\(Article\s+([\d,\s]+)\)/g;
        while ((match = pattern2.exec(text)) !== null) {
            const articleNumbers = match[1].split(',').map(n => n.trim());
@@ -270,13 +296,35 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            numbers.add(match[1]);
        }
 
+       // Pattern 4: (Article Numbers: 000005262, 000005218)
+       const pattern4 = /\(Article\s+Numbers:\s*([\d,\s]+)\)/g;
+       while ((match = pattern4.exec(text)) !== null) {
+           const articleNumbers = match[1].split(',').map(n => n.trim());
+           articleNumbers.forEach(num => {
+               if (/^\d{9}$/.test(num)) {
+                   numbers.add(num);
+               }
+           });
+       }
+
+       // Pattern 5: (Article Number: 000006196)
+       const pattern5 = /\(Article\s+Number:\s*(\d{9})\)/g;
+       while ((match = pattern5.exec(text)) !== null) {
+           numbers.add(match[1]);
+       }
+
        return Array.from(numbers);
    }
 
    hasArticleReferences(text) {
        if (!text) return false;
-       const hasRefs = /(\(Article\s+\d{9})|(\(Article\s+[\d,\s]+\))|(Article:\s+\d{9})/g.test(text);
-       console.log('hasArticleReferences check:', text.substring(0, 100), '...', 'hasRefs:', hasRefs);
+       // Updated patterns to match actual formats:
+       // (Article Numbers: 000005262, 000005218)
+       // (Article Number: 000006196)
+       // (Article 000005262)
+       // Article: 000005262
+       const hasRefs = /(\(Article\s+Numbers?:\s*[\d,\s]+\))|(\(Article\s+\d{9}\))|(Article:\s+\d{9})/g.test(text);
+       console.log('hasArticleReferences check:', text.substring(0, 200), '...', 'hasRefs:', hasRefs);
        return hasRefs;
    }
 
