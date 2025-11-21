@@ -77,13 +77,24 @@
 }
 
 .message-actions {
-   margin-top: 6px;
-   opacity: 0;
+   margin-top: 8px;
+   opacity: 0.8;
    transition: opacity 0.2s;
+   display: flex;
+   gap: 4px;
 }
 
-.slds-chat_message:hover .message-actions {
+.message-actions:hover {
    opacity: 1;
+}
+
+.message-actions lightning-button-icon {
+   --slds-c-button-color-background: #f8f9fa;
+   --slds-c-button-color-border: #e5e7eb;
+}
+
+.message-actions lightning-button-icon:hover {
+   --slds-c-button-color-background: #e5e7eb;
 }
 
 .input-container {
