@@ -72,7 +72,6 @@ export default class AssistantChat extends LightningElement {
            feedbackTypeText: '',
            feedbackComment: '',
            isSubmittingFeedback: false,
-           showDetailedGuidance: false,
            feedbackPlaceholder: '',
            feedbackRows: 2
        };
@@ -193,7 +192,6 @@ export default class AssistantChat extends LightningElement {
            feedbackType: feedback,
            feedbackTypeText: isNegative ? '👎 Help us improve' : '👍 Positive feedback',
            feedbackComment: '',
-           showDetailedGuidance: isNegative,
            feedbackRows: isNegative ? 4 : 2,
            feedbackPlaceholder: isNegative
                ? 'Please be specific: What was incorrect? What should the correct answer be? Include article numbers or references if possible...'
@@ -247,7 +245,6 @@ export default class AssistantChat extends LightningElement {
                    feedbackType: null,
                    feedbackTypeText: '',
                    feedbackComment: '',
-                   showDetailedGuidance: false,
                    feedbackPlaceholder: '',
                    feedbackRows: 2
                };
