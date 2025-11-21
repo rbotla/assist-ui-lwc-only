@@ -98,6 +98,44 @@
                                <lightning-button-icon icon-name="utility:like" alternative-text="Good" data-id={msg.id} data-feedback="positive" onclick={handleFeedback} size="x-small" variant={msg.feedbackGiven}></lightning-button-icon>
                                <lightning-button-icon icon-name="utility:dislike" alternative-text="Bad" data-id={msg.id} data-feedback="negative" onclick={handleFeedback} size="x-small" variant={msg.feedbackGiven}></lightning-button-icon>
                            </div>
+
+                           <!-- Inline Feedback Input (appears when feedback button clicked) -->
+                           <template if:true={msg.showFeedbackInput}>
+                               <div class="bubble-feedback-input">
+                                   <div class="feedback-input-header">
+                                       <span class="feedback-type-indicator">{msg.feedbackTypeText}</span>
+                                       <lightning-button-icon
+                                           icon-name="utility:close"
+                                           alternative-text="Cancel"
+                                           onclick={cancelBubbleFeedback}
+                                           data-id={msg.id}
+                                           size="xx-small"
+                                           class="cancel-bubble-feedback">
+                                       </lightning-button-icon>
+                                   </div>
+                                   <div class="feedback-input-controls">
+                                       <input
+                                           type="text"
+                                           class="slds-input bubble-feedback-textbox"
+                                           placeholder="Add comment (optional)..."
+                                           value={msg.feedbackComment}
+                                           data-id={msg.id}
+                                           oninput={handleBubbleFeedbackInput}
+                                           onkeydown={handleBubbleFeedbackKeyDown}
+                                       />
+                                       <div class="feedback-input-actions">
+                                           <lightning-button
+                                               label="Submit"
+                                               variant="brand"
+                                               size="small"
+                                               onclick={submitBubbleFeedback}
+                                               data-id={msg.id}
+                                               disabled={msg.isSubmittingFeedback}>
+                                           </lightning-button>
+                                       </div>
+                                   </div>
+                               </div>
+                           </template>
                        </template>
                    </div>
                </div>
@@ -106,61 +144,25 @@
 
        <!-- Input -->
        <footer class="slds-chat_input slds-p-around_medium">
-           <!-- Feedback Mode Header -->
-           <template if:true={isInFeedbackMode}>
-               <div class="feedback-header">
-                   <span class="feedback-title">{feedbackModeTitle}</span>
-                   <lightning-button-icon
-                       icon-name="utility:close"
-                       alternative-text="Cancel feedback"
-                       onclick={cancelFeedback}
-                       size="x-small"
-                       class="cancel-feedback-btn">
-                   </lightning-button-icon>
-               </div>
-           </template>
-
            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center input-container">
                <textarea
-                   class={inputClass}
-                   placeholder={dynamicPlaceholder}
+                   class="slds-textarea input-box"
+                   placeholder="Type your message..."
                    value={userInput}
                    oninput={handleInput}
                    onkeydown={handleKeyDown}
                    disabled={isLoading}
                    rows="1">
                </textarea>
-
-               <!-- Regular send button or feedback submit button -->
-               <template if:false={isInFeedbackMode}>
-                   <lightning-button-icon
-                       icon-name="utility:send"
-                       variant="brand"
-                       size="large"
-                       alternative-text="Send"
-                       onclick={handleSend}
-                       disabled={sendDisabled}
-                       class="send-button">
-                   </lightning-button-icon>
-               </template>
-
-               <template if:true={isInFeedbackMode}>
-                   <div class="feedback-actions">
-                       <lightning-button
-                           label="Skip"
-                           onclick={submitFeedbackWithoutComment}
-                           disabled={isSubmittingFeedback}
-                           class="skip-feedback-btn">
-                       </lightning-button>
-                       <lightning-button
-                           label="Submit"
-                           variant="brand"
-                           onclick={submitFeedbackWithComment}
-                           disabled={isSubmittingFeedback}
-                           class="submit-feedback-btn">
-                       </lightning-button>
-                   </div>
-               </template>
+               <lightning-button-icon
+                   icon-name="utility:send"
+                   variant="brand"
+                   size="large"
+                   alternative-text="Send"
+                   onclick={handleSend}
+                   disabled={sendDisabled}
+                   class="send-button">
+               </lightning-button-icon>
            </div>
        </footer>
    </div>

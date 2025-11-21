@@ -15,11 +15,6 @@ export default class AssistantChat extends LightningElement {
    @track messages = [];
    @track userInput = '';
    @track isLoading = false;
-   @track isInFeedbackMode = false;
-   @track isSubmittingFeedback = false;
-
-   currentFeedbackMessageId = null;
-   currentFeedbackType = null;
 
    sessionId = Date.now().toString();
    chatContainer = null; // Cached reference
@@ -50,25 +45,7 @@ export default class AssistantChat extends LightningElement {
    }
 
    get sendDisabled() {
-       return !this.userInput?.trim() || this.isLoading || this.isInFeedbackMode;
-   }
-
-   get feedbackModeTitle() {
-       return this.currentFeedbackType === 'positive' ?
-           '👍 Leave positive feedback' :
-           '👎 Leave negative feedback';
-   }
-
-   get inputClass() {
-       const baseClass = 'slds-textarea input-box';
-       return this.isInFeedbackMode ? baseClass + ' feedback-input' : baseClass;
-   }
-
-   get dynamicPlaceholder() {
-       if (this.isInFeedbackMode) {
-           return 'Add your feedback comment (optional) or click Submit...';
-       }
-       return this.inputPlaceholder || 'Type your message...';
+       return !this.userInput?.trim() || this.isLoading;
    }
 
    /* ============================================== MESSAGE HANDLING ============================================== */
@@ -89,7 +66,12 @@ export default class AssistantChat extends LightningElement {
            isTyping,
            bubbleClass: role === 'user' ? 'bubble-user' : role === 'system' ? 'bubble-system' : 'bubble-ai',
            showActions: role === 'assistant' && !isTyping,
-           feedbackGiven: null
+           feedbackGiven: null,
+           showFeedbackInput: false,
+           feedbackType: null,
+           feedbackTypeText: '',
+           feedbackComment: '',
+           isSubmittingFeedback: false
        };
        // const newMessage = {
        //     id,
@@ -201,58 +183,105 @@ export default class AssistantChat extends LightningElement {
        const msgId = event.currentTarget.dataset.id;
        const feedback = event.currentTarget.dataset.feedback; // 'positive' or 'negative'
 
-       // Enter feedback mode
-       this.currentFeedbackMessageId = msgId;
-       this.currentFeedbackType = feedback;
-       this.userInput = ''; // Clear any existing input
-       this.isInFeedbackMode = true;
+       // Show feedback input inside the specific message bubble
+       this.messages = this.messages.map(msg => {
+           if (msg.id == msgId) {
+               return {
+                   ...msg,
+                   showFeedbackInput: true,
+                   feedbackType: feedback,
+                   feedbackTypeText: feedback === 'positive' ? '👍 Positive feedback' : '👎 Negative feedback',
+                   feedbackComment: ''
+               };
+           }
+           return msg;
+       });
 
-       // Focus on input
+       // Auto-focus the feedback input
        Promise.resolve().then(() => {
-           const input = this.template.querySelector('textarea');
-           if (input) input.focus();
+           const input = this.template.querySelector(`[data-id="${msgId}"]`);
+           if (input && input.tagName === 'INPUT') {
+               input.focus();
+           }
        });
    }
 
-   cancelFeedback() {
-       this.isInFeedbackMode = false;
-       this.currentFeedbackMessageId = null;
-       this.currentFeedbackType = null;
-       this.userInput = '';
+   handleBubbleFeedbackInput(event) {
+       const msgId = event.currentTarget.dataset.id;
+       const comment = event.target.value;
+
+       this.messages = this.messages.map(msg => {
+           if (msg.id == msgId) {
+               return { ...msg, feedbackComment: comment };
+           }
+           return msg;
+       });
    }
 
-   submitFeedbackWithoutComment() {
-       this.userInput = ''; // No comment
-       this.submitFeedbackWithComment();
+   handleBubbleFeedbackKeyDown(event) {
+       if (event.key === 'Enter') {
+           event.preventDefault();
+           this.submitBubbleFeedback(event);
+       }
    }
 
-   async submitFeedbackWithComment() {
-       if (!this.currentFeedbackMessageId || !this.currentFeedbackType) return;
+   cancelBubbleFeedback(event) {
+       const msgId = event.currentTarget.dataset.id;
 
-       this.isSubmittingFeedback = true;
-       const comment = this.userInput.trim();
+       this.messages = this.messages.map(msg => {
+           if (msg.id == msgId) {
+               return {
+                   ...msg,
+                   showFeedbackInput: false,
+                   feedbackType: null,
+                   feedbackTypeText: '',
+                   feedbackComment: ''
+               };
+           }
+           return msg;
+       });
+   }
+
+   async submitBubbleFeedback(event) {
+       const msgId = event.currentTarget.dataset.id;
+       const msg = this.messages.find(m => m.id == msgId);
+
+       if (!msg || !msg.feedbackType) return;
+
+       // Set submitting state
+       this.messages = this.messages.map(m => {
+           if (m.id == msgId) {
+               return { ...m, isSubmittingFeedback: true };
+           }
+           return m;
+       });
 
        try {
            const result = await submitChatFeedback({
-               messageId: this.currentFeedbackMessageId,
-               userFeedback: this.currentFeedbackType,
+               messageId: msgId,
+               userFeedback: msg.feedbackType,
                sessionId: this.sessionId,
-               comment: comment || ''
+               comment: msg.feedbackComment || ''
            });
 
            if (result.success) {
-               // Update the message to show feedback was given
-               this.messages = this.messages.map(msg => {
-                   if (msg.id == this.currentFeedbackMessageId) {
-                       return { ...msg, feedbackGiven: 'brand' };
+               // Hide feedback input and show feedback was given
+               this.messages = this.messages.map(m => {
+                   if (m.id == msgId) {
+                       return {
+                           ...m,
+                           showFeedbackInput: false,
+                           feedbackGiven: 'brand',
+                           isSubmittingFeedback: false
+                       };
                    }
-                   return msg;
+                   return m;
                });
 
                // Add system message based on backend response
                if (result.status === 'ok') {
                    const feedbackText = result.user_feedback === 'positive' ? '👍 positive' : '👎 negative';
-                   const commentText = comment ? ` (${comment})` : '';
+                   const commentText = result.comment ? ` (${result.comment})` : '';
                    this.addMessage(`✅ Feedback received: ${feedbackText}${commentText}`, 'system');
                } else {
                    this.addMessage(`❌ Feedback failed: ${result.user_feedback}`, 'system');
@@ -268,8 +297,13 @@ export default class AssistantChat extends LightningElement {
            this.addMessage(`❌ Error sending feedback: ${err.body?.message || err.message}`, 'system');
            this.showToast('Error', 'Could not submit feedback', 'error');
        } finally {
-           this.isSubmittingFeedback = false;
-           this.cancelFeedback(); // Exit feedback mode
+           // Reset submitting state
+           this.messages = this.messages.map(m => {
+               if (m.id == msgId) {
+                   return { ...m, isSubmittingFeedback: false, showFeedbackInput: false };
+               }
+               return m;
+           });
        }
    }
 
