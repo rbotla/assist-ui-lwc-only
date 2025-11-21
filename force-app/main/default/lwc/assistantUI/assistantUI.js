@@ -217,9 +217,13 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
 
            // Pattern 1: (Article 000005262)
            updatedText = updatedText.replace(/\(Article\s+(\d{9})\)/g, (match, articleNumber) => {
+               console.log('Processing Article pattern:', match);
                const articleId = articleMap[articleNumber];
+               console.log(`Article ${articleNumber}: ID = ${articleId}`);
                if (articleId) {
-                   return `(<a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">Article ${articleNumber}</a>)`;
+                   const result = `(<a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">Article ${articleNumber}</a>)`;
+                   console.log('Replaced with:', result);
+                   return result;
                }
                return match;
            });
