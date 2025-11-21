@@ -81,7 +81,12 @@
                <div key={msg.id} class={msg.bubbleClass}>
                    <div class="slds-chat_message__text">
                        <div class="message-content">
-                           <lightning-formatted-rich-text value={msg.content}></lightning-formatted-rich-text>
+                           <template if:false={msg.hasArticleLinks}>
+                               <lightning-formatted-rich-text value={msg.content}></lightning-formatted-rich-text>
+                           </template>
+                           <template if:true={msg.hasArticleLinks}>
+                               <div lwc:dom="manual" class="message-with-links" data-message-id={msg.id}></div>
+                           </template>
                           
                            <!-- Thinking dots -->
                            <template if:true={msg.isTyping}>

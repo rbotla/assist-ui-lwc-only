@@ -40,8 +40,26 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            this.chatContainer = this.template.querySelector('.slds-chat_list');
        }
 
+       // Handle manual DOM manipulation for messages with article links
+       this.setupManualDOMContent();
+
        // Add event listeners for knowledge article links
        this.setupKnowledgeArticleLinks();
+   }
+
+   setupManualDOMContent() {
+       // Find all manual DOM containers and populate them
+       const manualContainers = this.template.querySelectorAll('.message-with-links');
+       manualContainers.forEach(container => {
+           const messageId = container.dataset.messageId;
+           if (messageId && !container.hasChildNodes()) {
+               // Find the corresponding message
+               const message = this.messages.find(msg => String(msg.id) === String(messageId));
+               if (message && message.content) {
+                   container.innerHTML = message.content;
+               }
+           }
+       });
    }
 
    setupKnowledgeArticleLinks() {
@@ -120,7 +138,8 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            feedbackComment: '',
            isSubmittingFeedback: false,
            feedbackPlaceholder: '',
-           feedbackRows: 2
+           feedbackRows: 2,
+           hasArticleLinks: role === 'assistant' && this.hasArticleReferences(content)
        };
 
        this.messages = [...this.messages, newMessage];
@@ -249,6 +268,11 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        }
 
        return Array.from(numbers);
+   }
+
+   hasArticleReferences(text) {
+       if (!text) return false;
+       return /(\(Article\s+\d{9})|(\(Article\s+[\d,\s]+\))|(Article:\s+\d{9})/g.test(text);
    }
 
    /* ============================================== USER INPUT ============================================== */
