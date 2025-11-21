@@ -23,19 +23,50 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
 
    /* ============================================== LIFECYCLE ============================================== */
    connectedCallback() {
-       // Set up global function for knowledge article navigation
-       window.openKnowledgeArticle = this.openKnowledgeArticle.bind(this);
+       // Component initialization
    }
 
    disconnectedCallback() {
-       // Clean up global function
-       delete window.openKnowledgeArticle;
+       // Clean up event listeners
+       const existingLinks = this.template.querySelectorAll('.knowledge-article-link');
+       existingLinks.forEach(link => {
+           link.removeEventListener('click', this.boundHandleKnowledgeArticleClick);
+       });
    }
 
    renderedCallback() {
        // Cache the scrollable container once for performance + reliability
        if (!this.chatContainer) {
            this.chatContainer = this.template.querySelector('.slds-chat_list');
+       }
+
+       // Add event listeners for knowledge article links
+       this.setupKnowledgeArticleLinks();
+   }
+
+   setupKnowledgeArticleLinks() {
+       // Remove existing listeners to prevent duplicates
+       const existingLinks = this.template.querySelectorAll('.knowledge-article-link');
+       existingLinks.forEach(link => {
+           link.removeEventListener('click', this.boundHandleKnowledgeArticleClick);
+       });
+
+       // Bind the handler once and store reference
+       if (!this.boundHandleKnowledgeArticleClick) {
+           this.boundHandleKnowledgeArticleClick = this.handleKnowledgeArticleClick.bind(this);
+       }
+
+       // Add new listeners
+       existingLinks.forEach(link => {
+           link.addEventListener('click', this.boundHandleKnowledgeArticleClick);
+       });
+   }
+
+   handleKnowledgeArticleClick(event) {
+       event.preventDefault();
+       const articleId = event.target.dataset.articleId;
+       if (articleId) {
+           this.openKnowledgeArticle(articleId);
        }
    }
 
@@ -155,7 +186,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            updatedText = updatedText.replace(/\(Article\s+(\d{9})\)/g, (match, articleNumber) => {
                const articleId = articleMap[articleNumber];
                if (articleId) {
-                   return `(<a href="javascript:void(0)" onclick="window.openKnowledgeArticle('${articleId}')" class="knowledge-article-link">Article ${articleNumber}</a>)`;
+                   return `(<a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">Article ${articleNumber}</a>)`;
                }
                return match;
            });
@@ -166,7 +197,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
                const links = numbers.map(num => {
                    const articleId = articleMap[num];
                    if (articleId) {
-                       return `<a href="javascript:void(0)" onclick="window.openKnowledgeArticle('${articleId}')" class="knowledge-article-link">${num}</a>`;
+                       return `<a href="#" data-article-id="${articleId}" data-article-number="${num}" class="knowledge-article-link">${num}</a>`;
                    }
                    return num;
                });
@@ -177,7 +208,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            updatedText = updatedText.replace(/Article:\s+(\d{9})/g, (match, articleNumber) => {
                const articleId = articleMap[articleNumber];
                if (articleId) {
-                   return `Article: <a href="javascript:void(0)" onclick="window.openKnowledgeArticle('${articleId}')" class="knowledge-article-link">${articleNumber}</a>`;
+                   return `Article: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>`;
                }
                return match;
            });
