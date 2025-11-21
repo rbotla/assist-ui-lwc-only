@@ -226,24 +226,32 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
 
            // Pattern 2: (Article Numbers: 000005262, 000005218)
            updatedText = updatedText.replace(/\(Article\s+Numbers:\s*([\d,\s]+)\)/g, (match, articleNumbers) => {
+               console.log('Processing Article Numbers pattern:', match);
                const numbers = articleNumbers.split(',').map(n => n.trim());
                const links = numbers.map(num => {
                    const articleId = articleMap[num];
+                   console.log(`Article ${num}: ID = ${articleId}`);
                    if (articleId && /^\d{9}$/.test(num)) {
                        return `<a href="#" data-article-id="${articleId}" data-article-number="${num}" class="knowledge-article-link">${num}</a>`;
                    }
-                   return num;
+                   return num; // Return plain number if no ID found
                });
-               return `(Article Numbers: ${links.join(', ')})`;
+               const result = `(Article Numbers: ${links.join(', ')})`;
+               console.log('Replaced with:', result);
+               return result;
            });
 
            // Pattern 3: (Article Number: 000006196)
            updatedText = updatedText.replace(/\(Article\s+Number:\s*(\d{9})\)/g, (match, articleNumber) => {
+               console.log('Processing Article Number pattern:', match);
                const articleId = articleMap[articleNumber];
+               console.log(`Article ${articleNumber}: ID = ${articleId}`);
                if (articleId) {
-                   return `(Article Number: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>)`;
+                   const result = `(Article Number: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>)`;
+                   console.log('Replaced with:', result);
+                   return result;
                }
-               return match;
+               return match; // Return original if no ID found
            });
 
            // Pattern 4: (Article 000005262, 000005263) - legacy support
