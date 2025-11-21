@@ -188,23 +188,46 @@ public with sharing class AssistantController {
        }
 
        try {
-           // Query Knowledge Articles by ArticleNumber
-           List<Knowledge__kav> articles = [
-               SELECT Id, ArticleNumber, Title
-               FROM Knowledge__kav
-               WHERE ArticleNumber IN :articleNumbers
-               AND PublishStatus = 'Online'
-               AND Language = 'en_US'
-           ];
+           // Query Knowledge Articles by ArticleNumber using dynamic SOQL
+           String query = 'SELECT Id, ArticleNumber, Title FROM KnowledgeArticleVersion ' +
+                         'WHERE ArticleNumber IN :articleNumbers ' +
+                         'AND PublishStatus = \'Online\' ' +
+                         'AND Language = \'en_US\'';
+
+           List<SObject> articles = Database.query(query);
 
            // Map article numbers to their 18-digit IDs
-           for (Knowledge__kav article : articles) {
-               articleMap.put(article.ArticleNumber, article.Id);
+           for (SObject articleSObj : articles) {
+               String articleNumber = (String) articleSObj.get('ArticleNumber');
+               String articleId = (String) articleSObj.get('Id');
+               if (articleNumber != null && articleId != null) {
+                   articleMap.put(articleNumber, articleId);
+               }
            }
 
        } catch (Exception e) {
            // Log error but don't break the user experience
            System.debug('Error fetching Knowledge Articles: ' + e.getMessage());
+
+           // Try alternative approach with Knowledge__kav if the above fails
+           try {
+               String altQuery = 'SELECT Id, ArticleNumber FROM Knowledge__kav ' +
+                               'WHERE ArticleNumber IN :articleNumbers ' +
+                               'AND PublishStatus = \'Online\' ' +
+                               'AND Language = \'en_US\'';
+
+               List<SObject> altArticles = Database.query(altQuery);
+
+               for (SObject articleSObj : altArticles) {
+                   String articleNumber = (String) articleSObj.get('ArticleNumber');
+                   String articleId = (String) articleSObj.get('Id');
+                   if (articleNumber != null && articleId != null) {
+                       articleMap.put(articleNumber, articleId);
+                   }
+               }
+           } catch (Exception altE) {
+               System.debug('Alternative Knowledge query also failed: ' + altE.getMessage());
+           }
        }
 
        return articleMap;
