@@ -106,75 +106,62 @@
 
        <!-- Input -->
        <footer class="slds-chat_input slds-p-around_medium">
+           <!-- Feedback Mode Header -->
+           <template if:true={isInFeedbackMode}>
+               <div class="feedback-header">
+                   <span class="feedback-title">{feedbackModeTitle}</span>
+                   <lightning-button-icon
+                       icon-name="utility:close"
+                       alternative-text="Cancel feedback"
+                       onclick={cancelFeedback}
+                       size="x-small"
+                       class="cancel-feedback-btn">
+                   </lightning-button-icon>
+               </div>
+           </template>
+
            <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center input-container">
                <textarea
-                   class="slds-textarea input-box"
-                   placeholder="Type your message..."
+                   class={inputClass}
+                   placeholder={dynamicPlaceholder}
                    value={userInput}
                    oninput={handleInput}
                    onkeydown={handleKeyDown}
                    disabled={isLoading}
                    rows="1">
                </textarea>
-               <lightning-button-icon
-                   icon-name="utility:send"
-                   variant="brand"
-                   size="large"
-                   alternative-text="Send"
-                   onclick={handleSend}
-                   disabled={sendDisabled}
-                   class="send-button">
-               </lightning-button-icon>
-           </div>
-       </footer>
 
-       <!-- Feedback Modal -->
-       <template if:true={showFeedbackModal}>
-           <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
-               <div class="slds-modal__container">
-                   <header class="slds-modal__header">
-                       <lightning-button-icon
-                           icon-name="utility:close"
-                           alternative-text="close"
-                           onclick={closeFeedbackModal}
-                           class="slds-modal__close">
-                       </lightning-button-icon>
-                       <h2 class="slds-text-heading_medium slds-hyphenate">
-                           {feedbackModalTitle}
-                       </h2>
-                   </header>
-                   <div class="slds-modal__content slds-var-p-around_medium">
-                       <div class="slds-form-element">
-                           <label class="slds-form-element__label" for="feedback-comment">
-                               Optional Comment
-                           </label>
-                           <div class="slds-form-element__control">
-                               <textarea
-                                   id="feedback-comment"
-                                   class="slds-textarea"
-                                   placeholder="Tell us more about your experience..."
-                                   value={feedbackComment}
-                                   onchange={handleFeedbackCommentChange}
-                                   rows="3">
-                               </textarea>
-                           </div>
-                       </div>
-                   </div>
-                   <footer class="slds-modal__footer">
+               <!-- Regular send button or feedback submit button -->
+               <template if:false={isInFeedbackMode}>
+                   <lightning-button-icon
+                       icon-name="utility:send"
+                       variant="brand"
+                       size="large"
+                       alternative-text="Send"
+                       onclick={handleSend}
+                       disabled={sendDisabled}
+                       class="send-button">
+                   </lightning-button-icon>
+               </template>
+
+               <template if:true={isInFeedbackMode}>
+                   <div class="feedback-actions">
                        <lightning-button
-                           label="Cancel"
-                           onclick={closeFeedbackModal}>
+                           label="Skip"
+                           onclick={submitFeedbackWithoutComment}
+                           disabled={isSubmittingFeedback}
+                           class="skip-feedback-btn">
                        </lightning-button>
                        <lightning-button
-                           label="Submit Feedback"
+                           label="Submit"
                            variant="brand"
                            onclick={submitFeedbackWithComment}
-                           disabled={isSubmittingFeedback}>
+                           disabled={isSubmittingFeedback}
+                           class="submit-feedback-btn">
                        </lightning-button>
-                   </footer>
-               </div>
-           </section>
-           <div class="slds-backdrop slds-backdrop_open" onclick={closeFeedbackModal}></div>
-       </template>
+                   </div>
+               </template>
+           </div>
+       </footer>
    </div>
 </template>

@@ -15,8 +15,7 @@ export default class AssistantChat extends LightningElement {
    @track messages = [];
    @track userInput = '';
    @track isLoading = false;
-   @track showFeedbackModal = false;
-   @track feedbackComment = '';
+   @track isInFeedbackMode = false;
    @track isSubmittingFeedback = false;
 
    currentFeedbackMessageId = null;
@@ -51,13 +50,25 @@ export default class AssistantChat extends LightningElement {
    }
 
    get sendDisabled() {
-       return !this.userInput?.trim() || this.isLoading;
+       return !this.userInput?.trim() || this.isLoading || this.isInFeedbackMode;
    }
 
-   get feedbackModalTitle() {
+   get feedbackModeTitle() {
        return this.currentFeedbackType === 'positive' ?
-           '👍 Positive Feedback' :
-           '👎 Negative Feedback';
+           '👍 Leave positive feedback' :
+           '👎 Leave negative feedback';
+   }
+
+   get inputClass() {
+       const baseClass = 'slds-textarea input-box';
+       return this.isInFeedbackMode ? baseClass + ' feedback-input' : baseClass;
+   }
+
+   get dynamicPlaceholder() {
+       if (this.isInFeedbackMode) {
+           return 'Add your feedback comment (optional) or click Submit...';
+       }
+       return this.inputPlaceholder || 'Type your message...';
    }
 
    /* ============================================== MESSAGE HANDLING ============================================== */
@@ -190,34 +201,43 @@ export default class AssistantChat extends LightningElement {
        const msgId = event.currentTarget.dataset.id;
        const feedback = event.currentTarget.dataset.feedback; // 'positive' or 'negative'
 
+       // Enter feedback mode
        this.currentFeedbackMessageId = msgId;
        this.currentFeedbackType = feedback;
-       this.feedbackComment = '';
-       this.showFeedbackModal = true;
+       this.userInput = ''; // Clear any existing input
+       this.isInFeedbackMode = true;
+
+       // Focus on input
+       Promise.resolve().then(() => {
+           const input = this.template.querySelector('textarea');
+           if (input) input.focus();
+       });
    }
 
-   handleFeedbackCommentChange(event) {
-       this.feedbackComment = event.target.value;
-   }
-
-   closeFeedbackModal() {
-       this.showFeedbackModal = false;
+   cancelFeedback() {
+       this.isInFeedbackMode = false;
        this.currentFeedbackMessageId = null;
        this.currentFeedbackType = null;
-       this.feedbackComment = '';
+       this.userInput = '';
+   }
+
+   submitFeedbackWithoutComment() {
+       this.userInput = ''; // No comment
+       this.submitFeedbackWithComment();
    }
 
    async submitFeedbackWithComment() {
        if (!this.currentFeedbackMessageId || !this.currentFeedbackType) return;
 
        this.isSubmittingFeedback = true;
+       const comment = this.userInput.trim();
 
        try {
            const result = await submitChatFeedback({
                messageId: this.currentFeedbackMessageId,
                userFeedback: this.currentFeedbackType,
                sessionId: this.sessionId,
-               comment: this.feedbackComment || ''
+               comment: comment || ''
            });
 
            if (result.success) {
@@ -232,7 +252,7 @@ export default class AssistantChat extends LightningElement {
                // Add system message based on backend response
                if (result.status === 'ok') {
                    const feedbackText = result.user_feedback === 'positive' ? '👍 positive' : '👎 negative';
-                   const commentText = result.comment ? ` (${result.comment})` : '';
+                   const commentText = comment ? ` (${comment})` : '';
                    this.addMessage(`✅ Feedback received: ${feedbackText}${commentText}`, 'system');
                } else {
                    this.addMessage(`❌ Feedback failed: ${result.user_feedback}`, 'system');
@@ -249,7 +269,7 @@ export default class AssistantChat extends LightningElement {
            this.showToast('Error', 'Could not submit feedback', 'error');
        } finally {
            this.isSubmittingFeedback = false;
-           this.closeFeedbackModal();
+           this.cancelFeedback(); // Exit feedback mode
        }
    }
 

@@ -136,11 +136,55 @@ assistantUI
    color: #0070d2;
 }
 
-/* Modal styling improvements */
-.slds-modal__container {
-   max-width: 500px;
+/* Feedback mode styling */
+.feedback-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   padding: 8px 12px;
+   background: #f0f9ff;
+   border: 1px solid #dbeafe;
+   border-radius: 8px 8px 0 0;
+   margin-bottom: -1px;
 }
 
-.slds-modal__content textarea {
-   min-height: 80px;
+.feedback-title {
+   font-weight: 600;
+   color: #1e3a8a;
+   font-size: 0.875rem;
+}
+
+.cancel-feedback-btn {
+   color: #6b7280;
+}
+
+.feedback-input {
+   border-color: #3b82f6 !important;
+   box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+   background-color: #fafcff;
+}
+
+.feedback-actions {
+   display: flex;
+   gap: 8px;
+   margin-left: 12px;
+}
+
+.skip-feedback-btn {
+   background: #f8f9fa;
+   border: 1px solid #e5e7eb;
+   color: #6b7280;
+}
+
+.skip-feedback-btn:hover {
+   background: #f3f4f6;
+}
+
+.submit-feedback-btn {
+   min-width: 80px;
+}
+
+/* Animation for smooth transitions */
+.input-container {
+   transition: all 0.2s ease-in-out;
 }

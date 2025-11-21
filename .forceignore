@@ -1,0 +1,18 @@
+# List of files and directories to be ignored by Salesforce CLI and source control
+**/.eslintcache
+**/lwc/**/*.css.map
+**/lwc/**/*.js.map
+**/*.map
+node_modules
+bower_components
+.sfdx
+.nyc_output
+coverage
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.log
+.Spotlight-V100
+.Trashes
+ehthumbs.db
