@@ -198,6 +198,44 @@
    flex-shrink: 0;
 }
 
+/* Enhanced guidance for negative feedback */
+.feedback-guidance {
+   margin-bottom: 12px;
+   padding: 12px;
+   background: #fef7f0;
+   border: 1px solid #fed7aa;
+   border-radius: 6px;
+}
+
+.guidance-title {
+   font-size: 0.875rem;
+   font-weight: 600;
+   color: #ea580c;
+   margin-bottom: 8px;
+}
+
+.guidance-list {
+   margin: 0;
+   padding-left: 20px;
+   color: #9a3412;
+   font-size: 0.8125rem;
+   line-height: 1.4;
+}
+
+.guidance-list li {
+   margin-bottom: 4px;
+}
+
+.guidance-list li:last-child {
+   margin-bottom: 0;
+}
+
+/* Enhanced textarea for negative feedback */
+.bubble-feedback-textbox[rows="4"] {
+   min-height: 80px;
+   resize: vertical;
+}
+
 @keyframes feedbackSlideIn {
    from {
        opacity: 0;

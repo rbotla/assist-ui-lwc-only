@@ -113,16 +113,30 @@
                                            class="cancel-bubble-feedback">
                                        </lightning-button-icon>
                                    </div>
+
+                                   <!-- Enhanced guidance for negative feedback -->
+                                   <template if:true={msg.showDetailedGuidance}>
+                                       <div class="feedback-guidance">
+                                           <div class="guidance-title">Help us improve this response:</div>
+                                           <ul class="guidance-list">
+                                               <li>What specific information was incorrect or missing?</li>
+                                               <li>What would have been the correct answer?</li>
+                                               <li>Include article number, policy reference, or source if known</li>
+                                               <li>Any pharmacy-specific context we should consider?</li>
+                                           </ul>
+                                       </div>
+                                   </template>
+
                                    <div class="feedback-input-controls">
-                                       <input
-                                           type="text"
-                                           class="slds-input bubble-feedback-textbox"
-                                           placeholder="Add comment (optional)..."
+                                       <textarea
+                                           class="slds-textarea bubble-feedback-textbox"
+                                           placeholder={msg.feedbackPlaceholder}
                                            value={msg.feedbackComment}
                                            data-id={msg.id}
                                            oninput={handleBubbleFeedbackInput}
                                            onkeydown={handleBubbleFeedbackKeyDown}
-                                       />
+                                           rows={msg.feedbackRows}>
+                                       </textarea>
                                        <div class="feedback-input-actions">
                                            <lightning-button
                                                label="Submit"

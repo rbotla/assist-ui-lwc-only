@@ -71,7 +71,10 @@ export default class AssistantChat extends LightningElement {
            feedbackType: null,
            feedbackTypeText: '',
            feedbackComment: '',
-           isSubmittingFeedback: false
+           isSubmittingFeedback: false,
+           showDetailedGuidance: false,
+           feedbackPlaceholder: '',
+           feedbackRows: 2
        };
        // const newMessage = {
        //     id,
@@ -183,25 +186,33 @@ export default class AssistantChat extends LightningElement {
        const msgId = event.currentTarget.dataset.id;
        const feedback = event.currentTarget.dataset.feedback; // 'positive' or 'negative'
 
+       // Configure feedback experience based on type
+       const isNegative = feedback === 'negative';
+       const feedbackConfig = {
+           showFeedbackInput: true,
+           feedbackType: feedback,
+           feedbackTypeText: isNegative ? '👎 Help us improve' : '👍 Positive feedback',
+           feedbackComment: '',
+           showDetailedGuidance: isNegative,
+           feedbackRows: isNegative ? 4 : 2,
+           feedbackPlaceholder: isNegative
+               ? 'Please be specific: What was incorrect? What should the correct answer be? Include article numbers or references if possible...'
+               : 'Tell us what you liked about this response (optional)...'
+       };
+
        // Show feedback input inside the specific message bubble
        this.messages = this.messages.map(msg => {
            if (msg.id == msgId) {
-               return {
-                   ...msg,
-                   showFeedbackInput: true,
-                   feedbackType: feedback,
-                   feedbackTypeText: feedback === 'positive' ? '👍 Positive feedback' : '👎 Negative feedback',
-                   feedbackComment: ''
-               };
+               return { ...msg, ...feedbackConfig };
            }
            return msg;
        });
 
        // Auto-focus the feedback input
        Promise.resolve().then(() => {
-           const input = this.template.querySelector(`[data-id="${msgId}"]`);
-           if (input && input.tagName === 'INPUT') {
-               input.focus();
+           const textarea = this.template.querySelector(`textarea[data-id="${msgId}"]`);
+           if (textarea) {
+               textarea.focus();
            }
        });
    }
@@ -235,7 +246,10 @@ export default class AssistantChat extends LightningElement {
                    showFeedbackInput: false,
                    feedbackType: null,
                    feedbackTypeText: '',
-                   feedbackComment: ''
+                   feedbackComment: '',
+                   showDetailedGuidance: false,
+                   feedbackPlaceholder: '',
+                   feedbackRows: 2
                };
            }
            return msg;
