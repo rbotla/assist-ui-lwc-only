@@ -15,6 +15,12 @@ export default class AssistantChat extends LightningElement {
    @track messages = [];
    @track userInput = '';
    @track isLoading = false;
+   @track showFeedbackModal = false;
+   @track feedbackComment = '';
+   @track isSubmittingFeedback = false;
+
+   currentFeedbackMessageId = null;
+   currentFeedbackType = null;
 
    sessionId = Date.now().toString();
    chatContainer = null; // Cached reference
@@ -48,6 +54,12 @@ export default class AssistantChat extends LightningElement {
        return !this.userInput?.trim() || this.isLoading;
    }
 
+   get feedbackModalTitle() {
+       return this.currentFeedbackType === 'positive' ?
+           '👍 Positive Feedback' :
+           '👎 Negative Feedback';
+   }
+
    /* ============================================== MESSAGE HANDLING ============================================== */
    addMessage(content, role = 'user', isTyping = false) {
        // Remove previous typing indicator if exists
@@ -64,8 +76,9 @@ export default class AssistantChat extends LightningElement {
            rawContent: content,
            role,
            isTyping,
-           bubbleClass: role === 'user' ? 'bubble-user' : 'bubble-ai',
-           showActions: role === 'assistant' && !isTyping
+           bubbleClass: role === 'user' ? 'bubble-user' : role === 'system' ? 'bubble-system' : 'bubble-ai',
+           showActions: role === 'assistant' && !isTyping,
+           feedbackGiven: null
        };
        // const newMessage = {
        //     id,
@@ -173,19 +186,70 @@ export default class AssistantChat extends LightningElement {
        }
    }
 
-   async handleFeedback(event) {
+   handleFeedback(event) {
        const msgId = event.currentTarget.dataset.id;
        const feedback = event.currentTarget.dataset.feedback; // 'positive' or 'negative'
 
+       this.currentFeedbackMessageId = msgId;
+       this.currentFeedbackType = feedback;
+       this.feedbackComment = '';
+       this.showFeedbackModal = true;
+   }
+
+   handleFeedbackCommentChange(event) {
+       this.feedbackComment = event.target.value;
+   }
+
+   closeFeedbackModal() {
+       this.showFeedbackModal = false;
+       this.currentFeedbackMessageId = null;
+       this.currentFeedbackType = null;
+       this.feedbackComment = '';
+   }
+
+   async submitFeedbackWithComment() {
+       if (!this.currentFeedbackMessageId || !this.currentFeedbackType) return;
+
+       this.isSubmittingFeedback = true;
+
        try {
-           await submitChatFeedback({
-               messageId: msgId,
-               feedback,
-               sessionId: this.sessionId
+           const result = await submitChatFeedback({
+               messageId: this.currentFeedbackMessageId,
+               userFeedback: this.currentFeedbackType,
+               sessionId: this.sessionId,
+               comment: this.feedbackComment || ''
            });
-           this.showToast('Thank you', 'Feedback recorded', 'success');
+
+           if (result.success) {
+               // Update the message to show feedback was given
+               this.messages = this.messages.map(msg => {
+                   if (msg.id == this.currentFeedbackMessageId) {
+                       return { ...msg, feedbackGiven: 'brand' };
+                   }
+                   return msg;
+               });
+
+               // Add system message based on backend response
+               if (result.status === 'ok') {
+                   const feedbackText = result.user_feedback === 'positive' ? '👍 positive' : '👎 negative';
+                   const commentText = result.comment ? ` (${result.comment})` : '';
+                   this.addMessage(`✅ Feedback received: ${feedbackText}${commentText}`, 'system');
+               } else {
+                   this.addMessage(`❌ Feedback failed: ${result.user_feedback}`, 'system');
+               }
+
+               this.showToast('Thank you', 'Feedback submitted successfully', 'success');
+           } else {
+               this.addMessage(`❌ Error sending feedback: ${result.message}`, 'system');
+               this.showToast('Error', result.message || 'Could not submit feedback', 'error');
+           }
+
        } catch (err) {
+           this.addMessage(`❌ Error sending feedback: ${err.body?.message || err.message}`, 'system');
            this.showToast('Error', 'Could not submit feedback', 'error');
+       } finally {
+           this.isSubmittingFeedback = false;
+           this.closeFeedbackModal();
        }
    }
 

@@ -102,21 +102,24 @@ public with sharing class AssistantController {
    }
 
    @AuraEnabled
-   public static void submitChatFeedback(String messageId, String feedback, String sessionId) {
+   public static Map<String, Object> submitChatFeedback(String messageId, String userFeedback, String sessionId, String comment) {
+       Map<String, Object> result = new Map<String, Object>();
+
        try {
            // Get OAuth token first
            String accessToken = getOAuthToken();
            if (String.isBlank(accessToken)) {
-               return; // Don't break user experience for feedback failures
+               result.put('success', false);
+               result.put('message', 'Authentication failed');
+               return result;
            }
 
-           // Prepare feedback data for your v3chat/feedback endpoint
+           // Prepare feedback data to match your payload structure
            Map<String, Object> feedbackData = new Map<String, Object>();
            feedbackData.put('conversation_id', sessionId);
-           feedbackData.put('feedback', feedback);
            feedbackData.put('message_id', messageId);
-           feedbackData.put('timestamp', DateTime.now().formatGmt('yyyy-MM-dd\'T\'HH:mm:ss.SSSZ'));
-           feedbackData.put('source', 'salesforce-assistant');
+           feedbackData.put('user_feedback', userFeedback);
+           feedbackData.put('comment', String.isNotBlank(comment) ? comment : '');
 
            String payload = JSON.serialize(feedbackData);
 
@@ -134,11 +137,25 @@ public with sharing class AssistantController {
 
            HttpResponse response = http.send(request);
 
-           // Note: We don't throw exceptions here as feedback submission failure shouldn't break the user experience
+           if (response.getStatusCode() == 200) {
+               // Parse the response to get feedback status
+               Map<String, Object> responseData = (Map<String, Object>) JSON.deserializeUntyped(response.getBody());
+               result.put('success', true);
+               result.put('status', responseData.get('status'));
+               result.put('user_feedback', responseData.get('user_feedback'));
+               result.put('comment', responseData.get('comment'));
+               result.put('message', 'Feedback submitted successfully');
+           } else {
+               result.put('success', false);
+               result.put('message', 'HTTP Error ' + response.getStatusCode() + ': ' + response.getStatus());
+           }
 
        } catch (Exception e) {
-           // Log the error but don't throw an exception to the UI
+           result.put('success', false);
+           result.put('message', 'Error submitting feedback: ' + e.getMessage());
        }
+
+       return result;
    }
 
    // Parse the complex API response format

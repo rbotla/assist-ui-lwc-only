@@ -113,3 +113,34 @@ assistantUI
    align-items: center;
    justify-content: center;
 }
+
+/* System message - center aligned */
+.bubble-system {
+   align-self: center;
+   max-width: 90%;
+   margin: 8px 0;
+}
+
+.bubble-system .slds-chat_message__text {
+   background: #f0f9ff;
+   color: #1e3a8a;
+   border: 1px solid #dbeafe;
+   border-radius: 8px;
+   padding: 8px 12px;
+   font-size: 0.875rem;
+   text-align: center;
+}
+
+/* Visual indicator for feedback given */
+.message-actions lightning-button-icon[variant="brand"] {
+   color: #0070d2;
+}
+
+/* Modal styling improvements */
+.slds-modal__container {
+   max-width: 500px;
+}
+
+.slds-modal__content textarea {
+   min-height: 80px;
+}

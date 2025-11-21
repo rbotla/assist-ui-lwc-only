@@ -95,8 +95,8 @@
                        <template if:true={msg.showActions}>
                            <div class="message-actions">
                                <lightning-button-icon icon-name="utility:copy_to_clipboard" alternative-text="Copy" data-id={msg.id} onclick={handleCopy} size="x-small"></lightning-button-icon>
-                               <lightning-button-icon icon-name="utility:like" alternative-text="Good" data-id={msg.id} data-feedback="positive" onclick={handleFeedback} size="x-small"></lightning-button-icon>
-                               <lightning-button-icon icon-name="utility:dislike" alternative-text="Bad" data-id={msg.id} data-feedback="negative" onclick={handleFeedback} size="x-small"></lightning-button-icon>
+                               <lightning-button-icon icon-name="utility:like" alternative-text="Good" data-id={msg.id} data-feedback="positive" onclick={handleFeedback} size="x-small" variant={msg.feedbackGiven}></lightning-button-icon>
+                               <lightning-button-icon icon-name="utility:dislike" alternative-text="Bad" data-id={msg.id} data-feedback="negative" onclick={handleFeedback} size="x-small" variant={msg.feedbackGiven}></lightning-button-icon>
                            </div>
                        </template>
                    </div>
@@ -127,5 +127,54 @@
                </lightning-button-icon>
            </div>
        </footer>
+
+       <!-- Feedback Modal -->
+       <template if:true={showFeedbackModal}>
+           <section role="dialog" tabindex="-1" class="slds-modal slds-fade-in-open">
+               <div class="slds-modal__container">
+                   <header class="slds-modal__header">
+                       <lightning-button-icon
+                           icon-name="utility:close"
+                           alternative-text="close"
+                           onclick={closeFeedbackModal}
+                           class="slds-modal__close">
+                       </lightning-button-icon>
+                       <h2 class="slds-text-heading_medium slds-hyphenate">
+                           {feedbackModalTitle}
+                       </h2>
+                   </header>
+                   <div class="slds-modal__content slds-var-p-around_medium">
+                       <div class="slds-form-element">
+                           <label class="slds-form-element__label" for="feedback-comment">
+                               Optional Comment
+                           </label>
+                           <div class="slds-form-element__control">
+                               <textarea
+                                   id="feedback-comment"
+                                   class="slds-textarea"
+                                   placeholder="Tell us more about your experience..."
+                                   value={feedbackComment}
+                                   onchange={handleFeedbackCommentChange}
+                                   rows="3">
+                               </textarea>
+                           </div>
+                       </div>
+                   </div>
+                   <footer class="slds-modal__footer">
+                       <lightning-button
+                           label="Cancel"
+                           onclick={closeFeedbackModal}>
+                       </lightning-button>
+                       <lightning-button
+                           label="Submit Feedback"
+                           variant="brand"
+                           onclick={submitFeedbackWithComment}
+                           disabled={isSubmittingFeedback}>
+                       </lightning-button>
+                   </footer>
+               </div>
+           </section>
+           <div class="slds-backdrop slds-backdrop_open" onclick={closeFeedbackModal}></div>
+       </template>
    </div>
 </template>
