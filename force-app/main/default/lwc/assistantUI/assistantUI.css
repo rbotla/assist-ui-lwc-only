@@ -154,6 +154,8 @@
    border: 1px solid #e2e8f0;
    border-radius: 8px;
    animation: feedbackSlideIn 0.3s ease-out;
+   width: 100%;
+   box-sizing: border-box;
 }
 
 .feedback-input-header {
@@ -175,17 +177,20 @@
 
 .feedback-input-controls {
    display: flex;
-   align-items: center;
+   flex-direction: column;
    gap: 8px;
+   width: 100%;
 }
 
 .bubble-feedback-textbox {
-   flex: 1;
+   width: 100%;
    border: 1px solid #d1d5db;
    border-radius: 6px;
    padding: 8px 12px;
    font-size: 0.875rem;
    transition: border-color 0.2s;
+   box-sizing: border-box;
+   resize: vertical;
 }
 
 .bubble-feedback-textbox:focus {
@@ -195,7 +200,9 @@
 }
 
 .feedback-input-actions {
-   flex-shrink: 0;
+   display: flex;
+   justify-content: flex-end;
+   width: 100%;
 }
 
 

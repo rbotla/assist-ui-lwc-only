@@ -91,10 +91,9 @@
                            </template>
                        </div>
 
-                       <!-- Copy / Feedback (AI only) -->
+                       <!-- Feedback Actions (AI only) -->
                        <template if:true={msg.showActions}>
                            <div class="message-actions">
-                               <lightning-button-icon icon-name="utility:copy_to_clipboard" alternative-text="Copy" data-id={msg.id} onclick={handleCopy} size="x-small"></lightning-button-icon>
                                <lightning-button-icon icon-name="utility:like" alternative-text="Good" data-id={msg.id} data-feedback="positive" onclick={handleFeedback} size="x-small" variant={msg.feedbackGiven}></lightning-button-icon>
                                <lightning-button-icon icon-name="utility:dislike" alternative-text="Bad" data-id={msg.id} data-feedback="negative" onclick={handleFeedback} size="x-small" variant={msg.feedbackGiven}></lightning-button-icon>
                            </div>

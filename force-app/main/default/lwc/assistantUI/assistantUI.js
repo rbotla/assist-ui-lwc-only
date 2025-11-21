@@ -172,14 +172,6 @@ export default class AssistantChat extends LightningElement {
    }
 
    /* ============================================== ACTIONS ============================================== */
-   handleCopy(event) {
-       const msgId = event.currentTarget.dataset.id;
-       const msg = this.messages.find(m => m.id == msgId);
-       if (msg?.rawContent) {
-           navigator.clipboard.writeText(msg.rawContent);
-           this.showToast('Copied!', 'Message copied to clipboard', 'success');
-       }
-   }
 
    handleFeedback(event) {
        const msgId = event.currentTarget.dataset.id;
