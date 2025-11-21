@@ -1,0 +1,115 @@
+assistantUI
+:host {
+   --bubble-user-bg: #0070d2;
+   --bubble-ai-bg: #f3f2f5;
+   --bubble-ai-text: #000;
+   --bubble-radius: 18px;
+}
+
+.chat-wrapper {
+   display: flex;
+   flex-direction: column;
+   height: 100%;
+   background: #fff;
+   border-radius: 12px;
+   overflow: hidden;
+   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.slds-chat_list {
+   flex: 1;
+   overflow-y: auto;
+   padding: 16px;
+   display: flex;
+   flex-direction: column;
+   gap: 16px;
+}
+
+/* User message - right side */
+.bubble-user {
+   align-self: flex-end;
+   max-width: 80%;
+}
+
+.bubble-user .slds-chat_message__text {
+   background: var(--bubble-user-bg);
+   color: white;
+   border-radius: var(--bubble-radius) var(--bubble-radius) 6px var(--bubble-radius);
+   padding: 10px 16px;
+}
+
+/* AI message - left side */
+.bubble-ai {
+   align-self: flex-start;
+   max-width: 80%;
+}
+
+.bubble-ai .slds-chat_message__text {
+   background: var(--bubble-ai-bg);
+   color: var(--bubble-ai-text);
+   border-radius: var(--bubble-radius) var(--bubble-radius) var(--bubble-radius) 6px;
+   padding: 10px 16px;
+}
+
+.message-content {
+   word-wrap: break-word;
+}
+
+.typing-indicator {
+   display: inline-flex;
+   gap: 4px;
+   margin-top: 8px;
+}
+
+.typing-indicator span {
+   width: 8px;
+   height: 8px;
+   background: #999;
+   border-radius: 50%;
+   animation: typing 1.4s infinite;
+}
+
+.typing-indicator span:nth-child(2) { animation-delay: 0.2s; }
+.typing-indicator span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes typing {
+   0%, 60%, 100% { transform: translateY(0); }
+   30% { transform: translateY(-10px); }
+}
+
+.message-actions {
+   margin-top: 6px;
+   opacity: 0;
+   transition: opacity 0.2s;
+}
+
+.slds-chat_message:hover .message-actions {
+   opacity: 1;
+}
+
+.input-container {
+   background: #f8f8f8;
+   border-top: 1px solid #ddd;
+   border-radius: 0 0 12px 12px;
+}
+
+.input-box {
+   resize: none;
+   min-height: 48px;
+   max-height: 120px;
+   overflow-y: auto;
+}
+
+.send-button {
+   margin-left: 12px;
+}
+
+.aria-logo svg {
+   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+}
+
+.aria-logo {
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}

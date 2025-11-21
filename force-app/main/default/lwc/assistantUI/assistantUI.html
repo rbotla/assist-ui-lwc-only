@@ -1,0 +1,131 @@
+<template>
+   <div class="chat-wrapper" style={wrapperStyle}>
+      
+       <!-- Header with Logo + Aria Branding -->
+       <header class="slds-chat_header slds-p-around_medium">
+           <div class="slds-media slds-media_center">
+               <div class="slds-media__figure">
+                   <!-- Simple modern logo using SLDS icons -->
+                   <span class="aria-logo" aria-hidden="false" role="img" aria-label="e-prescription support chat">
+                       <svg viewBox="0 0 100 100" width="48" height="48" xmlns="http://www.w3.org/2000/svg" focusable="false" aria-labelledby="title desc">
+                           <title id="title">eRx pharmacy support chat icon</title>
+                           <desc id="desc">Chat bubble with a capsule pill inside, using Optum orange #FF612B</desc>
+
+                           <!-- Background subtle ring -->
+                           <circle cx="50" cy="50" r="45" fill="#FF612B" opacity="0.08"/>
+
+                           <!-- Chat bubble -->
+                           <g transform="translate(0,0)">
+                           <!-- rounded bubble body -->
+                           <path d="M18 30
+                                   a8 8 0 0 1 8 -8
+                                   h48
+                                   a8 8 0 0 1 8 8
+                                   v26
+                                   a8 8 0 0 1 -8 8
+                                   h-22
+                                   l-8 10
+                                   v-10
+                                   h-18
+                                   a8 8 0 0 1 -8 -8
+                                   z"
+                                   fill="#FFFFFF" stroke="#FF612B" stroke-width="2.6" stroke-linejoin="round"/>
+                           </g>
+
+                           <!-- Capsule (pill) centered inside bubble -->
+                           <g transform="translate(50,49)" aria-hidden="true">
+                           <!-- left half (Optum orange) -->
+                           <path d="M-22 0
+                                   a12 12 0 0 1 12 -12
+                                   h16
+                                   a12 12 0 0 1 12 12
+                                   a12 12 0 0 1 -12 12
+                                   h-16
+                                   a12 12 0 0 1 -12 -12z"
+                                   transform="translate(0,0) rotate(20)"
+                                   fill="#FF612B" stroke="#FF612B" stroke-width="0"/>
+
+                           <!-- right half (white) -->
+                           <path d="M-22 0
+                                   a12 12 0 0 1 12 -12
+                                   h16
+                                   a12 12 0 0 1 12 12
+                                   a12 12 0 0 1 -12 12
+                                   h-16
+                                   a12 12 0 0 1 -12 -12z"
+                                   transform="translate(0,0) rotate(20) translate(6,0) scale(0.9,1)"
+                                   fill="#FFFFFF" stroke="#D8D8D8" stroke-width="0.8"/>
+
+                           <!-- thin dividing line -->
+                           <line x1="-2" y1="-9" x2="10" y2="9" transform="rotate(20)" stroke="#F6F6F6" stroke-width="1.2" stroke-linecap="round"/>
+
+                           <!-- ℞ mark to indicate prescription -->
+                           <text x="-2" y="5" transform="rotate(20)" font-family="Segoe UI, Roboto, Helvetica, Arial, sans-serif" font-size="11" font-weight="600" fill="#333333" text-anchor="middle" dominant-baseline="middle">℞</text>
+                           </g>
+                       </svg>
+
+                   </span>
+               </div>
+               <div class="slds-media__body slds-m-left_small">
+                   <h2 class="slds-text-heading_medium">Aria</h2>
+                   <p class="slds-text-body_small slds-text-color_weak">
+                       Ask me anything about eRx support
+                   </p>
+               </div>
+           </div>
+       </header>
+
+       <!-- Messages -->
+       <section class="slds-chat_list" role="log" aria-live="polite">
+           <template for:each={messages} for:item="msg">
+               <div key={msg.id} class={msg.bubbleClass}>
+                   <div class="slds-chat_message__text">
+                       <div class="message-content">
+                           <lightning-formatted-rich-text value={msg.content}></lightning-formatted-rich-text>
+                          
+                           <!-- Thinking dots -->
+                           <template if:true={msg.isTyping}>
+                               <div class="typing-indicator">
+                                   <span></span><span></span><span></span>
+                               </div>
+                           </template>
+                       </div>
+
+                       <!-- Copy / Feedback (AI only) -->
+                       <template if:true={msg.showActions}>
+                           <div class="message-actions">
+                               <lightning-button-icon icon-name="utility:copy_to_clipboard" alternative-text="Copy" data-id={msg.id} onclick={handleCopy} size="x-small"></lightning-button-icon>
+                               <lightning-button-icon icon-name="utility:like" alternative-text="Good" data-id={msg.id} data-feedback="positive" onclick={handleFeedback} size="x-small"></lightning-button-icon>
+                               <lightning-button-icon icon-name="utility:dislike" alternative-text="Bad" data-id={msg.id} data-feedback="negative" onclick={handleFeedback} size="x-small"></lightning-button-icon>
+                           </div>
+                       </template>
+                   </div>
+               </div>
+           </template>
+       </section>
+
+       <!-- Input -->
+       <footer class="slds-chat_input slds-p-around_medium">
+           <div class="slds-grid slds-grid_align-spread slds-grid_vertical-align-center input-container">
+               <textarea
+                   class="slds-textarea input-box"
+                   placeholder="Type your message..."
+                   value={userInput}
+                   oninput={handleInput}
+                   onkeydown={handleKeyDown}
+                   disabled={isLoading}
+                   rows="1">
+               </textarea>
+               <lightning-button-icon
+                   icon-name="utility:send"
+                   variant="brand"
+                   size="large"
+                   alternative-text="Send"
+                   onclick={handleSend}
+                   disabled={sendDisabled}
+                   class="send-button">
+               </lightning-button-icon>
+           </div>
+       </footer>
+   </div>
+</template>
