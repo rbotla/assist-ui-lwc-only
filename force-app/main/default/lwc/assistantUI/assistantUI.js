@@ -6,6 +6,7 @@ import { NavigationMixin } from 'lightning/navigation';
 import getChatResponse from '@salesforce/apex/AssistantController.getChatResponse';
 import submitChatFeedback from '@salesforce/apex/AssistantController.submitChatFeedback';
 import getKnowledgeArticleIds from '@salesforce/apex/AssistantController.getKnowledgeArticleIds';
+import generateConversationId from '@salesforce/apex/AssistantController.generateConversationId';
 
 const TYPING_INDICATOR_ID = 'typing-bubble-999';
 
@@ -17,13 +18,21 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
    @track messages = [];
    @track userInput = '';
    @track isLoading = false;
+   @track conversationId = '';
 
-   sessionId = Date.now().toString();
+   sessionId = Date.now().toString(); // Keep for legacy compatibility
    chatContainer = null; // Cached reference
 
    /* ============================================== LIFECYCLE ============================================== */
-   connectedCallback() {
-       // Component initialization
+   async connectedCallback() {
+       // Generate conversation ID
+       try {
+           this.conversationId = await generateConversationId();
+       } catch (error) {
+           console.error('Failed to generate conversation ID:', error);
+           // Fallback to client-side generation
+           this.conversationId = `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+       }
    }
 
    disconnectedCallback() {
@@ -395,7 +404,9 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        const userMessage = this.userInput.trim();
        if (!userMessage) return;
 
-       this.userInput = '';  // ← This instantly clears the box
+       // Clear input immediately and force UI update
+       this.userInput = '';
+
        this.addMessage(userMessage, 'user');
        this.addMessage('', 'assistant', true);
        this.isLoading = true;
@@ -403,7 +414,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        try {
            const response = await getChatResponse({
                message: userMessage,
-               sessionId: this.sessionId
+               conversationId: this.conversationId
            });
 
            // Remove typing bubble
@@ -512,7 +523,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            const result = await submitChatFeedback({
                messageId: msgId,
                userFeedback: msg.feedbackType,
-               sessionId: this.sessionId,
+               conversationId: this.conversationId,
                comment: msg.feedbackComment || ''
            });
 
@@ -573,11 +584,19 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        }
    }
 
-   handleClear() {
+   async handleClear() {
        if (confirm('Clear conversation history?')) {
            this.messages = [];
            this.addSystemMessage('Conversation cleared.');
            this.sessionId = Date.now().toString();
+
+           // Generate new conversation ID
+           try {
+               this.conversationId = await generateConversationId();
+           } catch (error) {
+               console.error('Failed to generate new conversation ID:', error);
+               this.conversationId = `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+           }
        }
    }
 

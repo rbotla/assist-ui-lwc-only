@@ -8,7 +8,15 @@ public with sharing class AssistantController {
    }
 
    @AuraEnabled
-   public static String getChatResponse(String message, String sessionId) {
+   public static String generateConversationId() {
+       // Generate conversation ID similar to: conv_${Date.now()}_${randomString}
+       Long timestamp = System.currentTimeMillis();
+       String randomString = EncodingUtil.convertToHex(Crypto.generateAesKey(128)).substring(0, 7);
+       return 'conv_' + timestamp + '_' + randomString;
+   }
+
+   @AuraEnabled
+   public static String getChatResponse(String message, String conversationId) {
        try {
            // Get OAuth token first
            String accessToken = getOAuthToken();
@@ -22,7 +30,7 @@ public with sharing class AssistantController {
            // Encode the message in base64 as shown in your curl example
            String encodedMessage = EncodingUtil.base64Encode(Blob.valueOf(message));
            requestBody.put('message', encodedMessage);
-           requestBody.put('conversation_id', sessionId);
+           requestBody.put('conversation_id', conversationId);
 
            String payload = JSON.serialize(requestBody);
 
@@ -102,7 +110,7 @@ public with sharing class AssistantController {
    }
 
    @AuraEnabled
-   public static Map<String, Object> submitChatFeedback(String messageId, String userFeedback, String sessionId, String comment) {
+   public static Map<String, Object> submitChatFeedback(String messageId, String userFeedback, String conversationId, String comment) {
        Map<String, Object> result = new Map<String, Object>();
 
        try {
@@ -116,7 +124,7 @@ public with sharing class AssistantController {
 
            // Prepare feedback data to match your payload structure
            Map<String, Object> feedbackData = new Map<String, Object>();
-           feedbackData.put('conversation_id', sessionId);
+           feedbackData.put('conversation_id', conversationId);
            feedbackData.put('message_id', messageId);
            feedbackData.put('user_feedback', userFeedback);
            feedbackData.put('comment', String.isNotBlank(comment) ? comment : '');

@@ -249,3 +249,18 @@
 .input-container {
    transition: all 0.2s ease-in-out;
 }
+
+/* Conversation ID Display */
+.conversation-id-display {
+   text-align: right;
+   padding: 4px 8px;
+   background: rgba(0, 0, 0, 0.05);
+   border-radius: 12px;
+   font-family: 'Courier New', monospace;
+   border: 1px solid #e5e7eb;
+}
+
+.conversation-id-text {
+   font-weight: 500;
+   letter-spacing: 0.5px;
+}
