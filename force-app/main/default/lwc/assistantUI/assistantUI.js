@@ -584,6 +584,22 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        }
    }
 
+   async handleNewSession() {
+       this.messages = [];
+       this.addSystemMessage('New session started.');
+       this.sessionId = Date.now().toString();
+
+       // Generate new conversation ID
+       try {
+           this.conversationId = await generateConversationId();
+           this.showToast('New Session', 'Started new conversation session', 'success');
+       } catch (error) {
+           console.error('Failed to generate new conversation ID:', error);
+           this.conversationId = `conv_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+           this.showToast('New Session', 'Started new conversation session', 'success');
+       }
+   }
+
    async handleClear() {
        if (confirm('Clear conversation history?')) {
            this.messages = [];
