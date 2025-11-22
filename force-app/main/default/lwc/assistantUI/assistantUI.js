@@ -586,7 +586,6 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
 
    async handleNewSession() {
        this.messages = [];
-       this.addSystemMessage('New session started.');
        this.sessionId = Date.now().toString();
 
        // Generate new conversation ID

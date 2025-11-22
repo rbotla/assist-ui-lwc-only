@@ -253,9 +253,9 @@
 /* Header Actions Container */
 .header-actions {
    display: flex;
-   flex-direction: column;
-   align-items: flex-end;
-   gap: 8px;
+   flex-direction: row;
+   align-items: center;
+   gap: 12px;
 }
 
 /* New Session Button */
