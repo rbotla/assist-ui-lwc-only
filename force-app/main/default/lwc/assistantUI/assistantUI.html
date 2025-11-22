@@ -74,6 +74,10 @@
                </div>
                <div class="slds-media__figure slds-media__figure_reverse">
                    <div class="header-actions">
+                       <div class="conversation-id-display">
+                           <span class="slds-text-body_small slds-text-color_weak">ID: </span>
+                           <span class="slds-text-body_small slds-text-color_weak conversation-id-text">{conversationId}</span>
+                       </div>
                        <lightning-button
                            label="New Session"
                            variant="neutral"
@@ -82,10 +86,6 @@
                            onclick={handleNewSession}
                            class="new-session-button">
                        </lightning-button>
-                       <div class="conversation-id-display">
-                           <span class="slds-text-body_small slds-text-color_weak">ID: </span>
-                           <span class="slds-text-body_small slds-text-color_weak conversation-id-text">{conversationId}</span>
-                       </div>
                    </div>
                </div>
            </div>
