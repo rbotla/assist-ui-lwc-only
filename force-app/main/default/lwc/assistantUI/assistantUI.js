@@ -272,6 +272,28 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
                return match;
            });
 
+           // Pattern 6: Article Numbers: 000006196, 000005218 (without parentheses)
+           updatedText = updatedText.replace(/Article\s+Numbers:\s*([\d,\s]+)/g, (match, articleNumbers) => {
+               const numbers = articleNumbers.split(',').map(n => n.trim());
+               const links = numbers.map(num => {
+                   const articleId = articleMap[num];
+                   if (articleId && /^\d{9}$/.test(num)) {
+                       return `<a href="#" data-article-id="${articleId}" data-article-number="${num}" class="knowledge-article-link">${num}</a>`;
+                   }
+                   return num;
+               });
+               return `Article Numbers: ${links.join(', ')}`;
+           });
+
+           // Pattern 7: Article Number: 000006196 (without parentheses)
+           updatedText = updatedText.replace(/Article\s+Number:\s*(\d{9})/g, (match, articleNumber) => {
+               const articleId = articleMap[articleNumber];
+               if (articleId) {
+                   return `Article Number: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>`;
+               }
+               return match;
+           });
+
            return updatedText;
 
        } catch (error) {
@@ -324,6 +346,23 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
            numbers.add(match[1]);
        }
 
+       // Pattern 6: Article Numbers: 000006196, 000005218 (without parentheses)
+       const pattern6 = /Article\s+Numbers:\s*([\d,\s]+)/g;
+       while ((match = pattern6.exec(text)) !== null) {
+           const articleNumbers = match[1].split(',').map(n => n.trim());
+           articleNumbers.forEach(num => {
+               if (/^\d{9}$/.test(num)) {
+                   numbers.add(num);
+               }
+           });
+       }
+
+       // Pattern 7: Article Number: 000006196 (without parentheses)
+       const pattern7 = /Article\s+Number:\s*(\d{9})/g;
+       while ((match = pattern7.exec(text)) !== null) {
+           numbers.add(match[1]);
+       }
+
        return Array.from(numbers);
    }
 
@@ -334,7 +373,8 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        // (Article Number: 000006196)
        // (Article 000005262)
        // Article: 000005262
-       return /(\(Article\s+Numbers?:\s*[\d,\s]+\))|(\(Article\s+\d{9}\))|(Article:\s+\d{9})/g.test(text);
+       // Article Numbers: 000006196, 000005218
+       return /(\(Article\s+Numbers?:\s*[\d,\s]+\))|(\(Article\s+\d{9}\))|(Article\s+Numbers?:\s*[\d,\s]+)|(Article:\s+\d{9})/g.test(text);
    }
 
    /* ============================================== USER INPUT ============================================== */
