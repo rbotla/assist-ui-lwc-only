@@ -50,21 +50,16 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
    setupManualDOMContent() {
        // Find all manual DOM containers and populate them
        const manualContainers = this.template.querySelectorAll('.message-with-links');
-       console.log('Manual containers found:', manualContainers.length);
 
-       manualContainers.forEach((container, index) => {
+       manualContainers.forEach(container => {
            const messageId = container.dataset.messageId;
-           console.log(`Container ${index}: messageId=${messageId}, hasChildren=${container.hasChildNodes()}`);
 
            if (messageId && !container.hasChildNodes()) {
                // Find the corresponding message
                const message = this.messages.find(msg => String(msg.id) === String(messageId));
-               console.log(`Found message for ${messageId}:`, message ? 'YES' : 'NO');
 
                if (message && message.content) {
-                   console.log('Setting innerHTML:', message.content.substring(0, 200));
                    container.innerHTML = message.content;
-                   console.log('Container after innerHTML:', container.innerHTML.substring(0, 200));
                }
            }
        });
@@ -91,6 +86,14 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
    handleKnowledgeArticleClick(event) {
        event.preventDefault();
        const articleId = event.target.dataset.articleId;
+       const articleNumber = event.target.dataset.articleNumber;
+
+       // Check if this is a mock ID (starts with kA1000000000)
+       if (articleId && articleId.startsWith('kA1000000000')) {
+           this.showToast('Knowledge Article', `Article ${articleNumber} not found in this org`, 'warning');
+           return;
+       }
+
        if (articleId) {
            this.openKnowledgeArticle(articleId);
        }
@@ -200,62 +203,47 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
    async parseArticleReferences(text) {
        // Extract all article numbers from various patterns
        const articleNumbers = this.extractArticleNumbers(text);
-       console.log('Extracted article numbers:', articleNumbers);
 
        if (articleNumbers.length === 0) {
-           console.log('No article numbers found');
            return text;
        }
 
        try {
            // Get Knowledge Article IDs from Apex
            const articleMap = await getKnowledgeArticleIds({ articleNumbers });
-           console.log('Article map from Apex:', articleMap);
 
            // Replace article references with clickable links
            let updatedText = text;
 
            // Pattern 1: (Article 000005262)
            updatedText = updatedText.replace(/\(Article\s+(\d{9})\)/g, (match, articleNumber) => {
-               console.log('Processing Article pattern:', match);
                const articleId = articleMap[articleNumber];
-               console.log(`Article ${articleNumber}: ID = ${articleId}`);
                if (articleId) {
-                   const result = `(<a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">Article ${articleNumber}</a>)`;
-                   console.log('Replaced with:', result);
-                   return result;
+                   return `(<a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">Article ${articleNumber}</a>)`;
                }
                return match;
            });
 
            // Pattern 2: (Article Numbers: 000005262, 000005218)
            updatedText = updatedText.replace(/\(Article\s+Numbers:\s*([\d,\s]+)\)/g, (match, articleNumbers) => {
-               console.log('Processing Article Numbers pattern:', match);
                const numbers = articleNumbers.split(',').map(n => n.trim());
                const links = numbers.map(num => {
                    const articleId = articleMap[num];
-                   console.log(`Article ${num}: ID = ${articleId}`);
                    if (articleId && /^\d{9}$/.test(num)) {
                        return `<a href="#" data-article-id="${articleId}" data-article-number="${num}" class="knowledge-article-link">${num}</a>`;
                    }
-                   return num; // Return plain number if no ID found
+                   return num;
                });
-               const result = `(Article Numbers: ${links.join(', ')})`;
-               console.log('Replaced with:', result);
-               return result;
+               return `(Article Numbers: ${links.join(', ')})`;
            });
 
            // Pattern 3: (Article Number: 000006196)
            updatedText = updatedText.replace(/\(Article\s+Number:\s*(\d{9})\)/g, (match, articleNumber) => {
-               console.log('Processing Article Number pattern:', match);
                const articleId = articleMap[articleNumber];
-               console.log(`Article ${articleNumber}: ID = ${articleId}`);
                if (articleId) {
-                   const result = `(Article Number: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>)`;
-                   console.log('Replaced with:', result);
-                   return result;
+                   return `(Article Number: <a href="#" data-article-id="${articleId}" data-article-number="${articleNumber}" class="knowledge-article-link">${articleNumber}</a>)`;
                }
-               return match; // Return original if no ID found
+               return match;
            });
 
            // Pattern 4: (Article 000005262, 000005263) - legacy support
@@ -284,7 +272,6 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
                return match;
            });
 
-           console.log('Final updatedText with links:', updatedText.substring(0, 500));
            return updatedText;
 
        } catch (error) {
@@ -347,9 +334,7 @@ export default class AssistantChat extends NavigationMixin(LightningElement) {
        // (Article Number: 000006196)
        // (Article 000005262)
        // Article: 000005262
-       const hasRefs = /(\(Article\s+Numbers?:\s*[\d,\s]+\))|(\(Article\s+\d{9}\))|(Article:\s+\d{9})/g.test(text);
-       console.log('hasArticleReferences check:', text.substring(0, 200), '...', 'hasRefs:', hasRefs);
-       return hasRefs;
+       return /(\(Article\s+Numbers?:\s*[\d,\s]+\))|(\(Article\s+\d{9}\))|(Article:\s+\d{9})/g.test(text);
    }
 
    /* ============================================== USER INPUT ============================================== */
